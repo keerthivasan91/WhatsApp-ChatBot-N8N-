@@ -1,0 +1,246 @@
+{
+  "name": "WhatsApp ChatBot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp",
+        "options": {}
+      },
+      "id": "341cd7cb-3745-43ef-8cd5-b337460c1d4e",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        260,
+        20
+      ],
+      "webhookId": "69208c2a-825d-49b1-acf3-cd0a7926d08d"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        840,
+        20
+      ],
+      "id": "ba0a19ad-51a8-41a3-8a26-706cadbef91d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=key: {{ $('Edit Fields').item.json.contacts[0].wa_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        960,
+        260
+      ],
+      "id": "8a11f4c4-cf1a-4742-ab29-108ee62d618c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{ $json[\"Tonum\"] }}"
+            },
+            {
+              "name": "From",
+              "value": "whatsapp:+xxxxxxxxxx"
+            },
+            {
+              "name": "Body",
+              "value": "={{$json[\"output\"]}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1460,
+        20
+      ],
+      "id": "b373c3c0-675e-4443-81ee-641c7c9fd004",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Zb8CJTXHXKhuiSSB",
+          "name": "credential 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        840,
+        260
+      ],
+      "id": "1b22018c-c85b-4a6b-a03c-f8da0494f170",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "pLjz0AIJ7qM3JYmt",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "28c6b69e-94d2-4215-91b2-a1c325f21dde",
+              "name": "chatInput",
+              "value": "={{ $json.body.Body }}",
+              "type": "string"
+            },
+            {
+              "id": "16af41ee-50ee-4f1d-9f58-fc662a3d4529",
+              "name": "tonum",
+              "value": "={{ $json.body.From }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        540,
+        20
+      ],
+      "id": "0d4a4feb-c916-4758-99d3-d70f03d83b37",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "22f76a31-ca72-4e02-8e68-42bcacc64520",
+              "name": "output",
+              "value": "={{ $json[\"output\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "2f18663e-410d-48e4-8d72-f8d452b1e7a2",
+              "name": "Tonum",
+              "value": "={{ $node[\"Edit Fields\"].json[\"tonum\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        20
+      ],
+      "id": "c0537b72-8ba5-4105-bf69-f13681f32240",
+      "name": "Edit Fields1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "153dc95c-acef-409c-be42-cc7591b50022",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "28edc58051b8676f42cd0b58305ac2b4273fd341a995cf969e7252b7a0ae3102"
+  },
+  "id": "Rm6BoTWIGJkvZkaA",
+  "tags": []
+}
